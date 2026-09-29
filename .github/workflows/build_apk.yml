@@ -1,3 +1,4 @@
+
 name: Build MR KOKO APK
 
 on:
@@ -8,24 +9,50 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.19.0'
           channel: 'stable'
 
-      - run: flutter pub get
+      - name: Get Dependencies
+        run: flutter pub get
 
-      - run: flutter build apk --release --no-obfuscate
+      - name: Fix Overlay Window Manifest
+        shell: bash
+        run: |
+          PLUGIN_MANIFEST=$(find "$HOME/.pub-cache" \
+            -path "*/flutter_overlay_window-*/android/src/main/AndroidManifest.xml" \
+            -print -quit)
 
-      - uses: actions/upload-artifact@v4
+          if [ -z "$PLUGIN_MANIFEST" ]; then
+            echo "ERROR: flutter_overlay_window Manifest not found"
+            exit 1
+          fi
+
+          echo "Found Manifest: $PLUGIN_MANIFEST"
+
+          sed -i 's/package="com.example.flutter_overlay_window"//' "$PLUGIN_MANIFEST"
+
+          echo "Updated Manifest:"
+          cat "$PLUGIN_MANIFEST"
+
+      - name: Build Release APK
+        run: flutter build apk --release --no-obfuscate
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: MR-KOKO-SignalPro
           path: build/app/outputs/flutter-apk/app-release.apk
