@@ -29,12 +29,13 @@ subprojects {
     project.evaluationDependsOn(':app')
 }
 
-// Fix missing namespace in flutter_overlay_window
+// Namespace fix for flutter_overlay_window
 subprojects { project ->
     project.plugins.withId('com.android.library') {
         if (project.name == 'flutter_overlay_window' &&
             !project.android.namespace) {
-            project.android.namespace = 'com.pravera.flutter_overlay_window'
+            project.android.namespace =
+                'com.example.flutter_overlay_window'
         }
     }
 }
